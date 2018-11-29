@@ -465,7 +465,7 @@ public class Sudoku {
 							}
 						}
 					}
-				} 
+				}
 			}
 		}           
 		if (debug > 0) { println(hhmmss() + " checkPointingPairs Ended") ; }
