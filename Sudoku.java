@@ -336,7 +336,7 @@ public class Sudoku {
 			needle = needles.substring(index, index+1) ;
 			if (haystack.indexOf(needle) > -1) found = true ;
 		}
-		println("  needles >" + needles + "< haystack >" + haystack + "<  " + found ) ;
+		println("        needles >" + needles + "< haystack >" + haystack + "<  " + found ) ;
 		return found ;
 	}
 	
@@ -434,8 +434,8 @@ public class Sudoku {
 											}
 										}
 									}
-									if (!lineFind && lineFindValid) println("*** Line Whoop Whoop ***") ;
-									if (lineTotalSolvedCount == 6 ) println("*** But invalid as all solved :( ***") ;
+									if (!lineFind && lineFindValid && lineTotalSolvedCount < 6) println("      *** Line Whoop Whoop ***") ;
+									// if (lineTotalSolvedCount == 6 ) println("      *** But invalid as all solved :( ***") ;
 									// go through targets elsewhere in the BOX
 									for (int bLine = lLineStart ; bLine < (lLineStart + 3) ; bLine ++) {
 										if (line != bLine ) { // don't check against self
@@ -445,6 +445,7 @@ public class Sudoku {
 											if (cellSolved (type, bLine, cell1)) solvedCount++ ;
 											if (cellSolved (type, bLine, cell1+1)) solvedCount++ ;
 											if (cellSolved (type, bLine, cell1+2)) solvedCount++ ;
+											boxTotalSolvedCount += solvedCount ;
 											if (solvedCount < 3) { // at least 1 cell must be unsolved
 												String btCandsStr = "" ;
 												String t1 = getCellStr(type, bLine, cell1) ;
@@ -460,7 +461,8 @@ public class Sudoku {
 											}
 										}
 									}
-									if (!boxFind && boxFindValid) println("*** box Whoop Whoop ***") ;
+									if (!boxFind && boxFindValid && boxTotalSolvedCount < 6) println("      *** box Whoop Whoop ***") ;
+									// if (boxTotalSolvedCount == 6 ) println("      *** But invalid as all solved :( ***") ;
 								}
 							}
 						}
