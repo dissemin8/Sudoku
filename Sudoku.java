@@ -342,6 +342,34 @@ public class Sudoku {
 	
 
 	static void checkPointingPairs(int type) {
+		// Pointing pairs/triples
+		// when one or more candidates appear in a line within a box,
+		// and those candidates do not appear elsewhere in the box,
+		// those candidates cannot appear anywhere on the rest of the line and can be removed
+		// Only a valid check for type = ROW / COL 
+		// 
+		//  1.1 yyy yyy      yyy 11. yyy      ... ... xxx   etc      
+		//  xxx ... ...      ... xxx ...      yyy yyy .11
+		//  xxx ... ...      ... xxx ...      ... ... xxx
+		//
+		//  if "1" only appears where shown and not in any "x" cell
+		//  then "1" can be removed from all "y" squares
+		//
+		//  aaa bbb ...      aaa ... bbb      bbb aaa ...      ... aaa bbb      bbb ... aaa      ... bbb aaa           
+		//
+		// Claiming pairs/triples
+		// when one or more candidates appear in a line within a box,
+		// and those candidates do not appear elsewhere in the line,
+		// those candidates cannot appear anywhere on the rest of the box and can be removed
+		// Only a valid check for type = ROW / COL 
+		// 
+		//  1.1 yyy yyy      yyy 11. yyy      ... ... xxx   etc      
+		//  xxx ... ...      ... xxx ...      yyy yyy .11
+		//  xxx ... ...      ... xxx ...      ... ... xxx
+		//
+		//  if "1" only appears where shown and not in any "y" cell
+		//  then "1" can be removed from all "x" squares
+
 		if (debug > 0) { println(hhmmss() + " checkPointingPairs Started") ; }
 		// process rows or columns, boxes are n/a 
 		println("type(" + TYPES[type] + ")") ;
@@ -463,6 +491,8 @@ public class Sudoku {
 									}
 									if (!boxFind && boxFindValid && boxTotalSolvedCount < 6) println("      *** box Whoop Whoop ***") ;
 									// if (boxTotalSolvedCount == 6 ) println("      *** But invalid as all solved :( ***") ;
+									if (!boxFind &&  lineFind) println("      *** potential pointing pair/triple ***") ;
+									if ( boxFind && !lineFind) println("      *** potential claiming pair/triple ***") ;
 								}
 							}
 						}
@@ -929,48 +959,5 @@ public class Sudoku {
 	    	}
 		}
 		if (debug > 0) { print(hhmmss()) ; println(" checkGroupsValid Ended") ; }
-	}
-	
-	static void checkBoxLines(int type) {   // types can only be ROW or COL
-		if (debug > 0) { 
-			print(hhmmss()) ; 
-			print(" checkBoxLines ") ;
-			print(TYPES[type]) ;
-			println(" Started") ; 
-		}
-		// when a pair of identical candidates appear in a line within a box,
-		// and that candidate doesn't appear elsewhere in the box,
-		// that candidate cannot appear anywhere on the rest of the line
-		// Only a valid check for type = ROW / COL 
-		// 
-		//  1.1 yyy yyy      yyy 11. yyy      ... ... xxx   etc      
-		//  xxx ... ...      ... xxx ...      yyy yyy .11
-		//  xxx ... ...      ... xxx ...      ... ... xxx
-		//
-		//  if "1" only appears where shown and not in any "x" cell
-		//  then "1" can be removed from all "y" squares
-		//
-		//  aaa bbb ...      aaa ... bbb      bbb aaa ...      ... aaa bbb      bbb ... aaa      ... bbb aaa           
-		//
-		
-		for (int boxLine = 0 ; boxLine < 3 ; boxLine++) { //  line of 3 boxes 
-		    for (int line = boxLine * 3 ; line < ((boxLine * 3) + 3) ; line++) { // line within boxLine
-		    	// skip line if it is complete already TODO
-		    	for (int triple1 = line * 3 ; triple1 < ((line * 3) + 3) ; triple1++) { // first set of 3 triples within box and line
-				    for (int triple2 = line * 3 ; triple2 < ((line * 3) + 3) ; triple2++) { // second set of 3 triples within box and line
-				    	// if triple1 is in a completed box then skip
-				    	// if triple2 is in a completed box then skip
-				    	// TODO this is tricky  !!!
-			    	}
-				}
-			}
-		}
-		if (debug > 0) { 
-			print(hhmmss()) ; 
-			print(" checkBoxLines ") ;
-			print(TYPES[type]) ;
-			println(" Ended") ; 
-		}
-
 	}
 }
