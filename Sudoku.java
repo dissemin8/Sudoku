@@ -14,6 +14,14 @@
    limitations under the License.
 */
 
+//     _____           _       _          
+//    / ____|         | |     | |         
+//   | (___  _   _  __| | ___ | | ___   _ 
+//    \___ \| | | |/ _` |/ _ \| |/ / | | |
+//    ____) | |_| | (_| | (_) |   <| |_| |
+//   |_____/ \__,_|\__,_|\___/|_|\_\\__,_|
+//                                        
+//   
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -267,8 +275,18 @@ public class Sudoku {
 			checkPuzzle() ;
 			
 			checkPointingPairs(ROW) ;
-			checkPointingPairs(COL) ;
+			checkForNakedSingles() ;  
 			
+			checkPointingPairs(COL) ;
+			checkForNakedSingles() ;  
+			
+			checkClaimingPairs(ROW) ;
+			checkForNakedSingles() ;  
+			
+			checkClaimingPairs(COL) ;
+			checkForNakedSingles() ;  
+			
+
 			pass++ ;
 		}
  		
@@ -329,34 +347,28 @@ public class Sudoku {
 	public static final void   print(Object x) { System.out.print(x)  ; }
 	public static final void println(Object x) { System.out.println(x); }
 	
-	public static final boolean findMatch(String needles, String haystack) {
-		String needle = "" ;
-		boolean found = false ;
-		for (int index = 0 ; index < needles.length() ; index++ ) {
-			needle = needles.substring(index, index+1) ;
-			if (haystack.indexOf(needle) > -1) found = true ;
+	public static final boolean findCand(String needleStr, String haystackStr) {
+		// String haystackStr = getCellStr (type, group, cell) ;
+		if (haystackStr.indexOf(needleStr) > -1) { 
+			return true ;
+		} else {
+			return false ;
 		}
-		println("        needles >" + needles + "< haystack >" + haystack + "<  " + found ) ;
-		return found ;
 	}
-	
 
-	static void checkPointingPairs(int type) {
-		// Pointing pairs/triples
-		// when one or more candidates appear in a line within a box,
-		// and those candidates do not appear elsewhere in the box,
-		// those candidates cannot appear anywhere on the rest of the line and can be removed
-		// Only a valid check for type = ROW / COL 
-		// 
-		//  1.1 yyy yyy      yyy 11. yyy      ... ... xxx   etc      
-		//  xxx ... ...      ... xxx ...      yyy yyy .11
-		//  xxx ... ...      ... xxx ...      ... ... xxx
-		//
-		//  if "1" only appears where shown and not in any "x" cell
-		//  then "1" can be removed from all "y" squares
-		//
-		//  aaa bbb ...      aaa ... bbb      bbb aaa ...      ... aaa bbb      bbb ... aaa      ... bbb aaa           
-		//
+	public static final void removeCand(int type, int group, int cell, String needleStr) {
+		String haystackStr = getCellStr (type, group, cell) ;
+		if (haystackStr.length() > 2 ) {
+			if (haystackStr.indexOf(needleStr) > -1) { 
+				setCellStr(type, group, cell, haystackStr.replace(needleStr,"")) ;
+			}
+		} else {
+			println ("ERROR **************** trying to remove cand from solved square ") ; 
+		}
+	}
+
+	static void checkClaimingPairs(int type) {
+
 		// Claiming pairs/triples
 		// when one or more candidates appear in a line within a box,
 		// and those candidates do not appear elsewhere in the line,
@@ -389,12 +401,11 @@ public class Sudoku {
 				if (type == COL) {
 					lLineStart = box % 3 * 3 ;
 					bLineStart = (int) (Math.floor(box/3.0) * 3) ;
-					chipStart  = (int) (Math.floor(box/3.0) * 3) ; // TODO - is this really right ?
+					chipStart  = (int) (Math.floor(box/3.0) * 3) ;  
 				}
-				// end line will always be 2 more than the start line
-				int lineEnd = lLineStart + 2 ;  
+				// int lineEnd = lLineStart + 2 ;  
 				// process each of the 3 lines crossing this box 
-				for (int line = lLineStart ; line <= lineEnd ; line++) {
+				for (int line = lLineStart ; line <= (lLineStart + 2) ; line++) {
 					println("    line(" + line + ") Llinestart(" + lLineStart + ") chipStart(" + chipStart + ") linestatus(" + getGroupStatus (type, line) + ")") ;
 					if (!getGroupStatus (type, line)) { // skip completed lines
 						// get the source "chips" (the 3x1) for this line
@@ -431,68 +442,196 @@ public class Sudoku {
 								// At this point we might have a pair
 								if (pairStr.length() > 0) { // only scan other chips if we have a potential pointing pair
 									println("     pairStr(" + pairStr + ")") ;
-									boolean lineFind = false ;
-									boolean  boxFind = false ;
-									boolean lineFindValid = true ;
-									boolean  boxFindValid = true ;
-									int lineTotalSolvedCount = 0 ;
-									int  boxTotalSolvedCount = 0 ;
-									// go through targets elsewhere in the LINE 
-									for (int lTargetChip = 0 ; lTargetChip < 3 ; lTargetChip ++) {
-										if (chipStart != (lTargetChip * 3)) { // don't check against self
-											cell1 = lTargetChip * 3 ;
-											solvedCount = 0 ; 
-											// Check each cell to see if it is solved
-											if (cellSolved (type, line, cell1)) solvedCount++ ;
-											if (cellSolved (type, line, cell1+1)) solvedCount++ ;
-											if (cellSolved (type, line, cell1+2)) solvedCount++ ;
-											lineTotalSolvedCount += solvedCount ;
-											if (solvedCount < 3) { // at least 1 cell must be unsolved
-												String ltCandsStr = "" ;
-												String t1 = getCellStr(type, line, cell1) ;
-												if (t1.length() > 2) ltCandsStr += t1.substring(2) ;
-												String t2 = getCellStr(type, line, cell1 + 1) ;
-												if (t2.length() > 2) ltCandsStr += t2.substring(2) ;
-												String t3 = getCellStr(type, line, cell1 + 2) ;
-												if (t3.length() > 2) ltCandsStr += t3.substring(2) ;
-												println("      Source(" + sCandsStr + ") line(" + line + ") ltCandsStr(" + ltCandsStr + ") pairStr(" + pairStr + ")" ) ;
-												// check to see if any chip contains same numbers as pairStr
-												lineFindValid = true ;
-												if (findMatch(pairStr, ltCandsStr)) lineFind = true ;
+									// *----------------------------------------------------*
+									// | go through each candidate in pairStr and then      |
+									// | findMatch will only have one needle.               |
+									// | Then, if pairStr isn't found in the rest-of-line   |
+									// | we can safely remove if from the rest of the BOX   |
+									// | without checking anything else (we may not find it |
+									// | though, but it doesn't matter                      |
+									// *----------------------------------------------------*
+									// go through each of the pair (triple) candidate and 
+									// see if they are in the rest of the line 
+									for (int pIndex = 0 ; pIndex < pairStr.length() ; pIndex++ ) {
+										String pairCharStr = pairStr.substring(pIndex,pIndex+1) ;
+										boolean lineFind = false ;
+										// go through targets elsewhere in the LINE 
+										for (int lTargetChip = 0 ; lTargetChip < 3 ; lTargetChip ++) {
+											if (chipStart != (lTargetChip * 3)) { // don't check against self
+												cell1 = lTargetChip * 3 ;
+												solvedCount = 0 ; 
+												// Check each cell to see if it is solved
+												if (cellSolved (type, line, cell1)) solvedCount++ ;
+												if (cellSolved (type, line, cell1+1)) solvedCount++ ;
+												if (cellSolved (type, line, cell1+2)) solvedCount++ ;
+												if (solvedCount < 3) { // at least 1 cell must be unsolved
+													String ltCandsStr = "" ;
+													String t1 = getCellStr(type, line, cell1) ;
+													if (t1.length() > 2) ltCandsStr += t1.substring(2) ;
+													String t2 = getCellStr(type, line, cell1 + 1) ;
+													if (t2.length() > 2) ltCandsStr += t2.substring(2) ;
+													String t3 = getCellStr(type, line, cell1 + 2) ;
+													if (t3.length() > 2) ltCandsStr += t3.substring(2) ;
+													println("      Source(" + sCandsStr + ") line(" + line + ") ltCandsStr(" + ltCandsStr + ") pairStr(" + pairStr + ")" ) ;
+													// check to see if any chip contains same numbers as pairStr
+													if (findCand(pairCharStr, ltCandsStr)) lineFind = true ;
+												}
+											}
+										}
+	                                    // If no pairCharStr in the rest of the line,
+										// it is safe to remove pairCharStr from the rest of the box
+										// go through targets elsewhere in the BOX
+										if (lineFind == false) {
+											println("      potential line claiming pair/triple - removing box candidates") ;
+											for (int bLine = lLineStart ; bLine < (lLineStart + 3) ; bLine ++) {
+												if (line != bLine ) { // don't check against self
+													cell1 = bLineStart  ;  
+													solvedCount = 0 ;
+													// Check each cell to see if it is solved
+													if (!cellSolved (type, bLine, cell1)) {
+														removeCand(type, bLine, cell1, pairCharStr) ;
+													}
+													if (!cellSolved (type, bLine, cell1+1)) {
+														removeCand(type, bLine, cell1+1, pairCharStr) ; 
+													}
+													if (!cellSolved (type, bLine, cell1+2)) {
+														removeCand(type, bLine, cell1+2, pairCharStr) ;
+													}
+												}
 											}
 										}
 									}
-									if (!lineFind && lineFindValid && lineTotalSolvedCount < 6) println("      *** Line Whoop Whoop ***") ;
-									// if (lineTotalSolvedCount == 6 ) println("      *** But invalid as all solved :( ***") ;
-									// go through targets elsewhere in the BOX
-									for (int bLine = lLineStart ; bLine < (lLineStart + 3) ; bLine ++) {
-										if (line != bLine ) { // don't check against self
-											cell1 = bLineStart  ;  
-											solvedCount = 0 ;
-											// Check each cell to see if it is solved
-											if (cellSolved (type, bLine, cell1)) solvedCount++ ;
-											if (cellSolved (type, bLine, cell1+1)) solvedCount++ ;
-											if (cellSolved (type, bLine, cell1+2)) solvedCount++ ;
-											boxTotalSolvedCount += solvedCount ;
-											if (solvedCount < 3) { // at least 1 cell must be unsolved
-												String btCandsStr = "" ;
-												String t1 = getCellStr(type, bLine, cell1) ;
-												if (t1.length() > 2) btCandsStr += t1.substring(2) ;
-												String t2 = getCellStr(type, bLine, cell1 + 1) ;
-												if (t2.length() > 2) btCandsStr += t2.substring(2) ;
-												String t3 = getCellStr(type, bLine, cell1 + 2) ;
-												if (t3.length() > 2) btCandsStr += t3.substring(2) ;
-												println("      Source(" + sCandsStr + ") bLine(" + bLine + ") btCandsStr(" + btCandsStr + ") pairStr(" + pairStr + ")") ;
-												// check to see if any chip contains same numbers as pairStr
-												boxFindValid = true ;
-												if (findMatch(pairStr, btCandsStr)) boxFind = true ;
+								}
+							}
+						}
+					}
+				}
+			}
+		}           
+		if (debug > 0) { println(hhmmss() + " checkPointingPairs Ended") ; }
+	}
+
+	static void checkPointingPairs(int type) {
+		// Pointing pairs/triples
+		// when one or more candidates appear in a line within a box,
+		// and those candidates do not appear elsewhere in the box,
+		// those candidates cannot appear anywhere on the rest of the line and can be removed
+		// Only a valid check for type = ROW / COL 
+		// 
+		//  1.1 yyy yyy      yyy 11. yyy      ... ... xxx   etc      
+		//  xxx ... ...      ... xxx ...      yyy yyy .11
+		//  xxx ... ...      ... xxx ...      ... ... xxx
+		//
+		//  if "1" only appears where shown and not in any "x" cell
+		//  then "1" can be removed from all "y" squares
+		//
+		//  aaa bbb ...      aaa ... bbb      bbb aaa ...      ... aaa bbb      bbb ... aaa      ... bbb aaa           
+		//
+		if (debug > 0) { println(hhmmss() + " checkPointingPairs Started") ; }
+		// process rows or columns, boxes are n/a 
+		println("type(" + TYPES[type] + ")") ;
+		for (int box = 0 ; box <9 ; box++) {    // process each of the 9 boxes
+			println("  box(" + box + ") boxstatus(" + getGroupStatus (BOX, box) + ")") ;
+			if (!getGroupStatus (BOX, box)) { // skip solved boxes
+				// if in ROW mode calculate number of first ROW for this box
+				int lLineStart = 0 ;
+				int bLineStart = 0 ;
+				int chipStart = 0 ;
+				if (type == ROW) { 
+					lLineStart = (int) (Math.floor(box/3.0) * 3) ;
+					bLineStart = box % 3 * 3 ;
+					chipStart  = box % 3 * 3 ;
+				}
+				// if in COL mode calculate number of first COL for this box
+				if (type == COL) {
+					lLineStart = box % 3 * 3 ;
+					bLineStart = (int) (Math.floor(box/3.0) * 3) ;
+					chipStart  = (int) (Math.floor(box/3.0) * 3) ; // TODO - is this really right ?
+				}
+				// int lineEnd = lLineStart + 2 ;  
+				// process each of the 3 lines crossing this box 
+				for (int line = lLineStart ; line <= (lLineStart + 2) ; line++) {
+					println("    line(" + line + ") Llinestart(" + lLineStart + ") chipStart(" + chipStart + ") linestatus(" + getGroupStatus (type, line) + ")") ;
+					if (!getGroupStatus (type, line)) { // skip completed lines
+						// get the source "chips" (the 3x1) for this line
+						int cell1 = chipStart ; // int cell1 = sourceChip * 3 ;
+						int solvedCount = 0 ;
+						if (cellSolved (type, line, cell1)) solvedCount++ ;
+						if (cellSolved (type, line, cell1+1)) solvedCount++ ;
+						if (cellSolved (type, line, cell1+2)) solvedCount++ ;
+						if (solvedCount < 2) { // at least 2 cells must be unsolved  
+							String sCandsStr = "" ;
+							String s1 = getCellStr(type, line, cell1) ;
+							if (s1.length() > 2) sCandsStr += s1.substring(2) ;
+							String s2 = getCellStr(type, line, cell1 + 1) ;
+							if (s2.length() > 2) sCandsStr += s2.substring(2) ;
+							String s3 = getCellStr(type, line, cell1 + 2) ;
+							if (s3.length() > 2) sCandsStr += s3.substring(2) ;
+							// get the target chips (the 3x1) for this line
+							if (sCandsStr.length() > 1) { // source chip must have > 1 chars to possibly have a pair
+								String pairStr = "" ;
+								for (int cand = 1 ; cand <= 9 ; cand++) {
+									String candStr = String.valueOf(cand) ;
+									// find first occurrence of cand in string
+									int i1 = sCandsStr.indexOf(candStr) ;
+									// is this cand actually in sCandsStr ?
+									if (i1 > -1) {
+										// last occurrence of cand in string
+										int i2 = sCandsStr.lastIndexOf(candStr) ; 
+										// if the first and last are not in the same place, there is more than 1!
+										if (i2 != i1) {          
+											pairStr = pairStr + candStr ;
+										}
+									}
+								}
+								// At this point we might have a pair
+								if (pairStr.length() > 0) { // only scan other chips if we have a potential pointing pair
+									println("     pairStr(" + pairStr + ")") ;
+									for (int pIndex = 0 ; pIndex < pairStr.length() ; pIndex++ ) {
+										String pairCharStr = pairStr.substring(pIndex,pIndex+1) ;
+										boolean  boxFind = false ;
+										// go through targets elsewhere in the BOX
+										for (int bLine = lLineStart ; bLine < (lLineStart + 3) ; bLine ++) {
+											if (line != bLine ) { // don't check against self
+												cell1 = bLineStart  ;  
+												solvedCount = 0 ;
+												// Check each cell to see if it is solved
+												if (cellSolved (type, bLine, cell1)) solvedCount++ ;
+												if (cellSolved (type, bLine, cell1+1)) solvedCount++ ;
+												if (cellSolved (type, bLine, cell1+2)) solvedCount++ ;
+												if (solvedCount < 3) { // at least 1 cell must be unsolved
+													String btCandsStr = "" ;
+													String t1 = getCellStr(type, bLine, cell1) ;
+													if (t1.length() > 2) btCandsStr += t1.substring(2) ;
+													String t2 = getCellStr(type, bLine, cell1 + 1) ;
+													if (t2.length() > 2) btCandsStr += t2.substring(2) ;
+													String t3 = getCellStr(type, bLine, cell1 + 2) ;
+													if (t3.length() > 2) btCandsStr += t3.substring(2) ;
+													println("      Source(" + sCandsStr + ") bLine(" + bLine + ") btCandsStr(" + btCandsStr + ") pairStr(" + pairStr + ")") ;
+													// check to see if any chip contains same numbers as pairStr
+													if (findCand(pairCharStr, btCandsStr)) boxFind = true ;
+												}
+											}
+										}
+										// go through targets elsewhere in the LINE
+										if (boxFind == false) {
+											for (int lTargetChip = 0 ; lTargetChip < 3 ; lTargetChip ++) {
+												if (chipStart != (lTargetChip * 3)) { // don't check against self
+													cell1 = lTargetChip * 3 ;
+													// Check each cell to see if it is solved
+													if (!cellSolved (type, line, cell1)) {
+														removeCand(type, line, cell1, pairCharStr) ;
+													}
+													if (!cellSolved (type, line, cell1+1)) {
+														removeCand(type, line, cell1+1, pairCharStr) ;
+													}
+													if (!cellSolved (type, line, cell1+2)) {
+														removeCand(type, line, cell1+2, pairCharStr) ;
+													}
+												}
 											}
 										}
 									}
-									if (!boxFind && boxFindValid && boxTotalSolvedCount < 6) println("      *** box Whoop Whoop ***") ;
-									// if (boxTotalSolvedCount == 6 ) println("      *** But invalid as all solved :( ***") ;
-									if (!boxFind &&  lineFind) println("      *** potential pointing pair/triple ***") ;
-									if ( boxFind && !lineFind) println("      *** potential claiming pair/triple ***") ;
 								}
 							}
 						}
