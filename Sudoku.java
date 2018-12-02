@@ -166,38 +166,32 @@ public class Sudoku {
 	
 	static String gridIn = "" ;
 	
-	static boolean	puzzleSolved	= false ;
-	static boolean	unsolvable		= false ;
-	static int		lastCellsSolved	= 0 ;
+	static			boolean	puzzleSolved			=	false ;
+	static			boolean	unsolvable				=	false ;
+	static			int		lastCellsSolved			=	0 ;
 
-	static boolean [][] groupStatus = {
+	static	boolean 		[][] groupStatus		=	{
 			{false,false,false,false,false,false,false,false,false},  // Row
 			{false,false,false,false,false,false,false,false,false},  // Column
 			{false,false,false,false,false,false,false,false,false}   // Box
 	} ;
 	
-	static final int X = 0 ;
-	static final int Y = 1 ;
-
-	static final int ROW = 0 ;
-	static final int COL = 1 ;
-	static final int BOX = 2 ;
-	
-	static int [][] groupSolvedCount = new int [3][9]  ;
-	
-	static final String [] TYPES = {"Row","Col","Box"} ;
-	
-	static final String ver = "3.0" ;
-
-	static int pass = 0 ;
-
-	// Main loop  starts here
-	
-	static String [][] grid = new String[9][9] ; 
+	static	final	int		X						=	0 ;
+	static	final	int		Y						=	1 ;
+	static	final	int		ROW						=	0 ;
+	static	final	int		COL						=	1 ;
+	static	final	int		BOX						=	2 ;
+	static 			int 	[][] groupSolvedCount	=	new int [3][9]  ;
+	static	final	String	[] TYPES 				=	{"Row","Col","Box"} ;
+	static 	final 	String 	ver		 				= 	"3.1" ;
+	static 			int 	pass					= 	0 ;
+	static 			String	[][] grid 				= 	new String[9][9] ; 
+	static 			String	routine 				= 	"" ;
+	static 			int 	indent					= 	1 ;
 	
 	public static void main(String[] args) {
 		
-		println(hhmmss() + " Soduku " + ver + " Started") ;
+		started("main - Soduku " + ver) ;
 		
 		// run the run-once tasks
 		setup(args) ;
@@ -269,56 +263,96 @@ public class Sudoku {
 
 			puzzleSoFar () ;  // add save puzzle ?
 
-			checkPuzzle() ;
-			
-			checkPointingPairs(ROW) ;
-			checkForNakedSingles() ;  
-			
-			checkPointingPairs(COL) ;
-			checkForNakedSingles() ;  
-			
 			checkClaimingPairs(ROW) ;
-			checkForNakedSingles() ;  
+			checkGroups(BOX) ;
+			checkGroups(ROW) ;
+			checkGroups(COL) ;
 			
 			checkClaimingPairs(COL) ;
-			checkForNakedSingles() ;  
+			checkGroups(BOX) ;
+			checkGroups(ROW) ;
+			checkGroups(COL) ;
+
+			
+			checkPointingPairs(ROW) ;
+			checkGroups(BOX) ;
+			checkGroups(ROW) ;
+			checkGroups(COL) ;
+			
+			checkPointingPairs(COL) ;
+			checkGroups(BOX) ;
+			checkGroups(ROW) ;
+			checkGroups(COL) ;
+   
+			checkPuzzle() ;			
+
 			
 			pass++ ; 
 
 		}
  		
 		drawNumbers() ;
-		println(hhmmss() + " Soduku " + ver + " Ended") ;
 		// dumpg () ; // print out all the grid drawing graphics we know
-		key() ; // print a key to the way the squares are printed  
+		key() ; // print a key to the way the squares are printed
+		ended("main - Soduku " + ver) ;
+	}
+	
+	static String repeat (String string, int repeats) {
+		String repeatedStr = "" ;
+		for (int index = 0 ; index < repeats ; index++) {
+			repeatedStr += string ;
+		}
+		return repeatedStr ;
+	}
+
+	static void tsprintln (String text) {
+		//indent++ ;
+		println(hhmmss() + repeat(" ",indent) + text) ;
+		//indent-- ;
+	}
+
+	static void tsprint (String text) {
+		//indent++ ;
+		print(hhmmss() + repeat(" ",indent) + text) ;
+		//indent-- ;
+	}
+
+	static void started (String routine) {
+		if (debug > 0) println(hhmmss() + repeat(" ",indent) + routine + " Started") ;
+		indent++ ;
+	}
+	
+	static void ended (String routine) {
+		indent-- ;
+		if (debug > 0) println(hhmmss() + repeat(" ",indent) + routine + " Ended") ;
 	}
 	
 	static void setup (String[] args) {
-		if (debug > 0) { println(hhmmss() + " setup Started ") ; }
+		started("setup") ;
 		 
-		println (hhmmss() + " The number or args supplied was " + args.length) ;
+		tsprintln ("The number or args supplied was " + args.length) ;
 		if (args.length == 0 ) {
-			println(hhmmss() + " I'll try to solve the built in example puzzle as one wasn't supplied as an argument.") ;
+			tsprintln("I'll try to solve the built in example puzzle as one wasn't supplied as an argument.") ;
 			// gridIn = "  9  6   3   7 2 6  84 5 3  319   6           4   398  2 7 14  4 7 5   9   6  7  " ;
 			// gridIn = "  9  6   3   7 2 6  84 5 3  319   6           4   398  2 7 14  4 7 5   9   6  9  " ; // last 2 is 7
 			gridIn = "82   47      72   7 6  3 42  7326   5 47892 3  2541 7  7 29 6     13  272 5467 81" ;
 		} else if ((args.length == 1) && (args[0].length() == 81)) {
-			println(hhmmss() + " I'll try to solve the puzzle supplied as an argument.") ;
+			tsprintln("I'll try to solve the puzzle supplied as an argument.") ;
 			gridIn = args[0] ;
 		} else {
-			println(hhmmss() + " Puzzles must be supplied as one argument exactly 81 chars long.") ;
+			tsprintln(" Puzzles must be supplied as one argument exactly 81 chars long.") ;
 			if (args.length > 1) { 
-				println("         I see too many args.") ;
+				tsprintln("I see too many args.") ;
 			} 
 			if (args[0].length() != 81) {
-				println("         The argument supplied is " + args[0].length() + " characters.") ;
+				tsprintln("The argument supplied is " + args[0].length() + " characters.") ;
 			}
 			return ;
 		}
 		 
  		stringGridToGrid() ;  // new grid loader
 
- 		if (debug > 0) { println(hhmmss() + " setup Ended ") ; }
+ 		ended("setup") ;
 	}
 	
 	static String getCellStr (int type, int group, int cell) {
@@ -361,12 +395,16 @@ public class Sudoku {
 
 	public static final void removeCand(int type, int group, int cell, String needleStr) {
 		String haystackStr = getCellStr (type, group, cell) ;
+		tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell) ;
 		if (haystackStr.length() > 2 ) {
 			if (haystackStr.indexOf(needleStr) > 1) { 
 				setCellStr(type, group, cell, haystackStr.replace(needleStr,"")) ;
+				println (" Success") ;
+			} else {
+				println (" Not Found") ;
 			}
 		} else {
-			println ("ERROR **************** trying to remove cand from solved square ") ; 
+			println (" ERROR **************** trying to remove cand from solved square ") ; 
 		}
 	}
 
@@ -384,13 +422,11 @@ public class Sudoku {
 		//
 		//  if "1" only appears where shown and not in any "y" cell
 		//  then "1" can be removed from all "x" squares
-
-		if (debug > 0) { println(hhmmss() + " checkPointingPairs Started") ; }
+		started("checkClaimingPairs " + TYPES[type] ) ;
 		// process rows or columns, boxes are n/a 
-		println("type(" + TYPES[type] + ")") ;
 		for (int box = 0 ; box <9 ; box++) {    // process each of the 9 boxes
-			println("  box(" + box + ") boxstatus(" + getGroupStatus (BOX, box) + ")") ;
 			if (!getGroupStatus (BOX, box)) { // skip solved boxes
+				tsprintln("checking box " + box) ;
 				// if in ROW mode calculate number of first ROW for this box
 				int lLineStart = 0 ;
 				int bLineStart = 0 ;
@@ -407,10 +443,10 @@ public class Sudoku {
 					chipStart  = (int) (Math.floor(box/3.0) * 3) ;  
 				}
 				// int lineEnd = lLineStart + 2 ;  
-				// process each of the 3 lines crossing this box 
+				// process each of the 3 lines crossing this BOX 
 				for (int line = lLineStart ; line <= (lLineStart + 2) ; line++) {
-					println("    line(" + line + ") Llinestart(" + lLineStart + ") chipStart(" + chipStart + ") linestatus(" + getGroupStatus (type, line) + ")") ;
 					if (!getGroupStatus (type, line)) { // skip completed lines
+						tsprintln(" line(" + line + ") Llinestart(" + lLineStart + ") chipStart(" + chipStart + ")") ;
 						// get the source "chips" (the 3x1) for this line
 						int cell1 = chipStart ; // int cell1 = sourceChip * 3 ;
 						int solvedCount = 0 ;
@@ -444,7 +480,7 @@ public class Sudoku {
 								}
 								// At this point we might have a pair
 								if (pairStr.length() > 0) { // only scan other chips if we have a potential pointing pair
-									println("     pairStr(" + pairStr + ")") ;
+									tsprintln(" pairStr " + pairStr) ;
 									// *----------------------------------------------------*
 									// | go through each candidate in pairStr and then      |
 									// | findMatch will only have one needle.               |
@@ -475,7 +511,7 @@ public class Sudoku {
 													if (t2.length() > 2) ltCandsStr += t2.substring(2) ;
 													String t3 = getCellStr(type, line, cell1 + 2) ;
 													if (t3.length() > 2) ltCandsStr += t3.substring(2) ;
-													println("      Source(" + sCandsStr + ") line(" + line + ") ltCandsStr(" + ltCandsStr + ") pairStr(" + pairStr + ")" ) ;
+													tsprintln("   pairCharStr(" + pairCharStr + ") Source(" + sCandsStr + ") line(" + line + ") ltCandsStr(" + ltCandsStr + ")") ;
 													// check to see if any chip contains same numbers as pairStr
 													if (findCand(pairCharStr, ltCandsStr)) lineFind = true ;
 												}
@@ -485,19 +521,19 @@ public class Sudoku {
 										// it is safe to remove pairCharStr from the rest of the box
 										// go through targets elsewhere in the BOX
 										if (lineFind == false) {
-											println("      potential line claiming pair/triple - removing box candidates") ;
+											tsprintln("  potential line claiming pair/triple - removing box candidates") ;
 											for (int bLine = lLineStart ; bLine < (lLineStart + 3) ; bLine ++) {
 												if (line != bLine ) { // don't check against self
 													cell1 = bLineStart  ;  
 													solvedCount = 0 ;
 													// Check each cell to see if it is solved
-													if (!cellSolved (type, bLine, cell1)) {
+													if (!cellSolved (type, bLine, cell1) && findCand(pairCharStr, getCellStr(type, bLine, cell1))) {
 														removeCand(type, bLine, cell1, pairCharStr) ;
 													}
-													if (!cellSolved (type, bLine, cell1+1)) {
+													if (!cellSolved (type, bLine, cell1+1) && findCand(pairCharStr, getCellStr(type, bLine, cell1+1))) {
 														removeCand(type, bLine, cell1+1, pairCharStr) ; 
 													}
-													if (!cellSolved (type, bLine, cell1+2)) {
+													if (!cellSolved (type, bLine, cell1+2) && findCand(pairCharStr, getCellStr(type, bLine, cell1+2))) {
 														removeCand(type, bLine, cell1+2, pairCharStr) ;
 													}
 												}
@@ -511,10 +547,11 @@ public class Sudoku {
 				}
 			}
 		}           
-		if (debug > 0) { println(hhmmss() + " checkPointingPairs Ended") ; }
+		ended("checkClaimingPairs") ;
 	}
 
 	static void checkPointingPairs(int type) {
+		started("checkPointingPairs") ;
 		// Pointing pairs/triples
 		// when one or more candidates appear in a line within a box,
 		// and those candidates do not appear elsewhere in the box,
@@ -530,7 +567,7 @@ public class Sudoku {
 		//
 		//  aaa bbb ...      aaa ... bbb      bbb aaa ...      ... aaa bbb      bbb ... aaa      ... bbb aaa           
 		//
-		if (debug > 0) { println(hhmmss() + " checkPointingPairs Started") ; }
+
 		// process rows or columns, boxes are n/a 
 		println("type(" + TYPES[type] + ")") ;
 		for (int box = 0 ; box <9 ; box++) {    // process each of the 9 boxes
@@ -622,13 +659,13 @@ public class Sudoku {
 												if (chipStart != (lTargetChip * 3)) { // don't check against self
 													cell1 = lTargetChip * 3 ;
 													// Check each cell to see if it is solved
-													if (!cellSolved (type, line, cell1)) {
+													if (!cellSolved (type, line, cell1) && findCand(pairCharStr, getCellStr(type, line, cell1))) {
 														removeCand(type, line, cell1, pairCharStr) ;
 													}
-													if (!cellSolved (type, line, cell1+1)) {
+													if (!cellSolved (type, line, cell1+1) && findCand(pairCharStr, getCellStr(type, line, cell1+1))) {
 														removeCand(type, line, cell1+1, pairCharStr) ;
 													}
-													if (!cellSolved (type, line, cell1+2)) {
+													if (!cellSolved (type, line, cell1+2) && findCand(pairCharStr, getCellStr(type, line, cell1+2))) {
 														removeCand(type, line, cell1+2, pairCharStr) ;
 													}
 												}
@@ -642,7 +679,7 @@ public class Sudoku {
 				}
 			}
 		}           
-		if (debug > 0) { println(hhmmss() + " checkPointingPairs Ended") ; }
+		ended("checkPointingPairs") ;
 	}
 	
 	static void puzzleSoFar () {
@@ -709,7 +746,7 @@ public class Sudoku {
 
 	static void stringGridToGrid() {
 		// read in string grid and convert to integer array
-		if (debug > 0) { println(hhmmss() + " stringGridToNewGrid Started") ; }
+		started("stringGridToGrid") ;
 		for (int col = 0 ; col < 9 ; col++) {
 			for (int row = 0 ; row < 9 ; row++) {
 				int pos = ( col ) + ( row * 9 )  ; 
@@ -718,11 +755,11 @@ public class Sudoku {
 				grid [col][row] = cell ;  
 			}
 		}
-		if (debug > 0) { println(hhmmss() + " stringGridToNewGrid Ended") ; }
+		ended("stringGridToGrid") ;
 	}
 
 	static void drawNumbers() {
-		if (debug > 0) { println(hhmmss() + " drawNumbers Started") ; }
+		started("drawNumbers") ;
 		println(hhmmss() + " This is pass number " + pass ) ;
 		// Draw to border
 		g(0,1) ; g(1,29) ; g(2,1) ; g(1,29) ; g(2,1) ;g(1,29) ; g(3,1) ; println("") ;
@@ -793,7 +830,7 @@ public class Sudoku {
 				g(4,1) ; g(18,9) ; g(16,1) ; g(18,9) ; g(16,1) ;  g(18,9) ; g(4,1) ; g(18,9) ; g(16,1) ; g(18,9) ; g(16,1) ;  g(18,9) ; g(4,1) ; g(18,9) ; g(16,1) ; g(18,9) ; g(16,1) ;  g(18,9) ; g(4,1) ; println("") ;   
 			}
 		}
-		if (debug > 0) println(hhmmss() + " drawNumbers Ended") ; 
+		ended("drawNumbers") ; 
 		// wait(1) ;
 	}
 	
@@ -807,7 +844,7 @@ public class Sudoku {
 	}
 
 	static int statusChecks () {
-		if (debug > 0) println(hhmmss() + " statusChecks Started") ; 
+		started("statusChecks") ;
 		int totalSolvedCount = 0 ;
 	    for (int type = 0 ; type < 3 ; type++ ) {
 			for (int group = 0 ; group < 9 ; group++) {
@@ -819,25 +856,26 @@ public class Sudoku {
 			    			if (type == ROW) totalSolvedCount++ ; 
 			    			if ( groupSolvedCount[type][group] == 9 ) {
 			    				setGroupStatus (type, group, true) ;
-			    				println(hhmmss() + " " + TYPES[type] + " " + group + " complete") ;
+			    				tsprintln(TYPES[type] + " " + group + " complete") ;
 			    			}
 			    		}
 			    	}
 			    } else {
+			    	// only count the overall total for 1 type (ROW)
 			    	if (type == ROW) totalSolvedCount += 9 ; 
 			    }
 		    }
 		}
-		if (debug > 0) println(hhmmss() + " statusChecks Ended") ;
+		ended("statusChecks") ;
 		return totalSolvedCount ;
 	}
 
 	static void checkGroups(int type) {  
-		if (debug > 0) println(hhmmss() + " checkGroups " + TYPES[type] + " Started") ; 
+		started("checkGroups " + TYPES[type]) ; 
 		for (int group = 0 ; group < 9 ; group++) {
 	    	if (!getGroupStatus(type,group)) { // only check this group if it is not flagged as solved 
 	    		for (int cell1 = 0 ; cell1 < 9 ; cell1++) {
-	    			if (!cellSolved(type, group, cell1)) { // only check this square if it is unsolved
+	    			if (!cellSolved(type, group, cell1)) { // only check this cell if it is unsolved
 	    				//   [cell1][group]  is the location of the unsolved cell
 	    				//   [cell2][group]  is the location of the potentially solved cell
 	    				for (int cell2 = 0 ; cell2 < 9 ; cell2 ++) {
@@ -848,8 +886,13 @@ public class Sudoku {
 	    							String solved = getCellStr(type, group, cell2).replaceAll(" ","") ;
 	    							// get the cell we want to update 
 	    							String cellToUpdate = getCellStr(type, group, cell1) ;
-	    							// remove the solved number from the candidate list and write it back 
-	    							setCellStr(type, group, cell1, cellToUpdate.replace(solved,"")) ;
+	    							if (findCand(solved,cellToUpdate)) { // TODO
+		    							// 	remove the solved number from the candidate list and write it back
+	    								removeCand(type, group, cell1, solved) ;
+	    								//
+	    								// setCellStr(type, group, cell1, cellToUpdate.replace(solved,"")) ;
+	    								// tsprintln(solved + " removed as candidate from " + TYPES[type] + " " + group + " cell " + cell1) ;
+	    							}
 	    		    			}
 	    					}
 	    				}
@@ -857,7 +900,7 @@ public class Sudoku {
 	    		}
 	    	}
 	    }
-	    if (debug > 0) println(hhmmss() + " checkGroups " + TYPES[type] + " Ended") ;
+		ended("checkGroups " + TYPES[type]) ;
 	}
 
 	static void checkForHiddenSingles(int type) {
@@ -887,8 +930,9 @@ public class Sudoku {
 								}
 							}
 							if ((matchCount == 0) && valid) {
-								// this candidate was unique so set sell to solved-by-computer
+								// this candidate was unique so set cell to solved-by-computer
 								setCellStr(type, group, cell1, " " + candStr) ;
+								tsprintln("Hidden Single at " + TYPES[type] + " " + group + " cell " + cell1 + "set to solved") ;
 							}
 						}
 					}
@@ -899,7 +943,7 @@ public class Sudoku {
 	}
 
 	static void checkGroupsNakedPair(int type) {
-		if (debug > 0)  println(hhmmss() + " checkGroupsNakedPair " + TYPES[type] + " Started") ;		
+		started("checkGroupsNakedPair " + TYPES[type]) ;		
 		for (int group = 0 ; group < 9 ; group++) {
 			if (!getGroupStatus(type, group)) { // only check this group if it is not flagged as solved
 				// [cell1][group]  is the location of the source cell  
@@ -937,10 +981,10 @@ public class Sudoku {
 				}
 	    	}
     	}
-		if (debug > 0)  println(hhmmss() + " checkGroupsNakedPair " + TYPES[type] + " Ended") ;
+		ended("checkGroupsNakedPair " + TYPES[type]) ;
 	}
 	static void checkForNakedSingles() {
-		if (debug > 0)  println(hhmmss() + " checkForNakedSingles Started") ;  
+		started("checkForNakedSingles") ;  
 		int type = ROW ; 
 		// all 81 squares - it only needs to be done as ROW as it will cover all cells
 		for (int group = 0 ; group < 9 ; group++) {
@@ -950,7 +994,7 @@ public class Sudoku {
 						print(getCellStr(type, group, cell) + " ") ;
 					}
 					// move last remaining candidate one position left 
-					// into the solved-by-computer position 
+					// into the solved-by-computer position  TODO  call solver 
 					setCellStr(type, group, cell, getCellStr(type, group, cell).substring(1))  ;
 					if (debug > 1) {
 						println(" ncs: square " + group + " , " + cell + " solved") ;
@@ -961,37 +1005,37 @@ public class Sudoku {
 			}
 			if (debug > 1) println("") ;
 		}
-		if (debug > 0)  println(hhmmss() + " checkForNakedSingles Ended") ;  
+		ended("checkForNakedSingles") ;  
 	}
 
 	static boolean checkPuzzle() {  
-		if (debug > 0) println(hhmmss() + " checkPuzzle Started") ;  
+		started("checkPuzzle Started") ;  
 		int cellsSolved = statusChecks () ;
 		if (debug > 1) {
-    		print(hhmmss() + " lastCellsSolved(" + lastCellsSolved + ") cellsSolved (" + cellsSolved);
-			print(") solvedthispass (") ; println(cellsSolved - lastCellsSolved + ")" );
+    		tsprintln("lastCellsSolved(" + lastCellsSolved + ") cellsSolved (" + cellsSolved +
+    				") solvedthispass (") ; println(cellsSolved - lastCellsSolved + ")" );
 		}
 		if (lastCellsSolved == cellsSolved) {
 			unsolvable = true ;
-			print(hhmmss() + " **** puzzle seems unsolvable ****");
-			if (debug > 0) println(hhmmss() + " checkPuzzle Ended") ;
+			tsprintln("**** puzzle seems unsolvable ****");
+			ended("checkPuzzle") ;
 			return true ;
 		}
 		lastCellsSolved = cellsSolved ; 
 		if ( cellsSolved == 81) { 
 			puzzleSolved = true ;
-			println(hhmmss() + " puzzle solved");
+			tsprintln("puzzle solved");
 		} else {
 			int perc = (int)(cellsSolved / 81.0 * 100) ;
-			println(" Solved " + cellsSolved + " out of 81 (" + perc + " Percent)") ;
+			tsprintln("Solved " + cellsSolved + " out of 81 (" + perc + " Percent)") ;
 		}
-		if (debug > 0) println(hhmmss() + " checkPuzzle Ended") ;
+		ended("checkPuzzle") ;
 		return puzzleSolved ;
 	}	
 
 	static void checkGroupsValid(int type) {  
 		// check that no two solved squares are the same number in every group (Row / Col / Box)
-		if (debug > 0) println(hhmmss() + " checkGroupsValid " + TYPES[type] + " check Started") ; 
+		started("checkGroupsValid " + TYPES[type]) ; 
 		// 0 = Row, 1 = Col, 2 = Box
 		for (int group = 0 ; group < 9 ; group++) { // rows
 	    	for (int cell1 = 0 ; cell1 < 8 ; cell1++) { // columns
@@ -1014,6 +1058,6 @@ public class Sudoku {
 	    		}
 	    	}
 		}
-		if (debug > 0) println(hhmmss() + " checkGroupsValid " + TYPES[type] + " check Ended") ;
+		ended("checkGroupsValid " + TYPES[type]) ;
 	}
 }
