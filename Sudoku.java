@@ -233,7 +233,10 @@ public class Sudoku {
 			
 			//checkColsUniqCand() ;
 			checkForHiddenSingles(COL) ;
-			checkGroupsValid(COL) ; 
+			checkGroupsValid(COL) ;
+			
+			clearScreen() ;
+			drawNumbers() ;
 
 			checkGroupsNakedPair(COL) ;
 			checkGroupsValid(COL) ;
@@ -252,6 +255,9 @@ public class Sudoku {
 			checkForHiddenSingles(BOX) ;
 			checkGroupsValid(BOX) ;
 			
+			clearScreen() ;
+			drawNumbers() ;
+			
 			checkGroupsNakedPair(BOX) ;
 			checkGroupsValid(BOX) ;
 
@@ -267,22 +273,37 @@ public class Sudoku {
 			checkGroups(BOX) ;
 			checkGroups(ROW) ;
 			checkGroups(COL) ;
+			checkGroupsValid(ROW) ;
+			
+			clearScreen() ;
+			drawNumbers() ;
 			
 			checkClaimingPairs(COL) ;
 			checkGroups(BOX) ;
 			checkGroups(ROW) ;
 			checkGroups(COL) ;
+			checkGroupsValid(COL) ;
 
+			clearScreen() ;
+			drawNumbers() ;
 			
 			checkPointingPairs(ROW) ;
 			checkGroups(BOX) ;
 			checkGroups(ROW) ;
 			checkGroups(COL) ;
+			checkGroupsValid(ROW) ;
+			
+			clearScreen() ;
+			drawNumbers() ;
 			
 			checkPointingPairs(COL) ;
 			checkGroups(BOX) ;
 			checkGroups(ROW) ;
 			checkGroups(COL) ;
+			checkGroupsValid(COL) ;
+			
+			clearScreen() ;
+			drawNumbers() ;
    
 			checkPuzzle() ;			
 
@@ -362,7 +383,7 @@ public class Sudoku {
 	static void setCellStr (int type, int group, int cell, String cellStr) {
 		// if we just have one candidate left, shift it left 1 position to mark cell as solved
 		if ( cellStr.length() == 3 ) {
-			println(" Solved " + TYPES[type] + " " + group + " cell " + cell + " as " + cellStr.substring(2));
+			tsprintln(" Solved " + TYPES[type] + " " + group + " cell " + cell + " as " + cellStr.substring(2));
 			cellStr = cellStr.substring(1) ;
 		}
 		grid [xyArray [type][group][cell][X]] [xyArray [type][group][cell][Y]] = cellStr ;
@@ -395,16 +416,16 @@ public class Sudoku {
 
 	public static final void removeCand(int type, int group, int cell, String needleStr) {
 		String haystackStr = getCellStr (type, group, cell) ;
-		tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell) ;
+		tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell + " >" + haystackStr + "<") ;
 		if (haystackStr.length() > 2 ) {
 			if (haystackStr.indexOf(needleStr) > 1) { 
 				setCellStr(type, group, cell, haystackStr.replace(needleStr,"")) ;
-				println (" Success") ;
+				tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell + "  - Success") ;
 			} else {
-				println (" Not Found") ;
+				tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell + "  - Not Found" ) ;
 			}
 		} else {
-			println (" ERROR **************** trying to remove cand from solved square ") ; 
+			tsprintln ("removing " + needleStr + " from " + TYPES[type] + " " + group + " cell " + cell + "  - ERROR trying to remove from solved cell" ) ;
 		}
 	}
 
@@ -916,7 +937,7 @@ public class Sudoku {
 							int matchCount = 0 ;
 							boolean valid = false ;  
 							for (int cell2 = 0 ; cell2 < 9 ; cell2++ ) {
-								if ( !cellSolved(type, group, cell2 ) ) { // check only unsolved squares
+								//if ( !cellSolved(type, group, cell2 ) ) { // check only unsolved squares
 									if (cell1 != cell2) {    // don't check self against self
 										// only check if this candidate set in source square
 										if (getCellStr(type, group, cell1).indexOf(candStr) >= 0 ) {
@@ -927,12 +948,12 @@ public class Sudoku {
 											}
 										}
 									}
-								}
+								//}
 							}
 							if ((matchCount == 0) && valid) {
 								// this candidate was unique so set cell to solved-by-computer
 								setCellStr(type, group, cell1, " " + candStr) ;
-								tsprintln("Hidden Single at " + TYPES[type] + " " + group + " cell " + cell1 + "set to solved") ;
+								tsprintln("Hidden Single at " + TYPES[type] + " " + group + " cell " + cell1 + " set to solved") ;
 							}
 						}
 					}
